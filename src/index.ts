@@ -36,8 +36,51 @@ app.use(express.json());
 app.listen(PORT, () => {
 	console.log(`Listening on port ${PORT}`);
 
+const readlineSync = require('readline-sync');
+const { Client } = require('pg');
 
-	// CÓDIGO PARA ATENDER OS REQUERIMENTOS
-	// R01, R02, R03, R04, R05
-	
+const client = new Client({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'postgres',
+    password: '5633123',
+    port: 7000,
+});
+
+async function adicionarAlunos() {
+    try {
+        await client.connect();
+
+        const quantidade = readlineSync.questionInt('Quantos alunos deseja adicionar? ');
+
+        if (isNaN(quantidade) || quantidade <= 0) {
+            console.error('Por favor, insira um número válido.');
+            return;
+        }
+
+        for (let i = 0; i < quantidade; i++) {
+            const nome = readlineSync.question(`Digite o nome do aluno ${i + 1}: `);
+            if (!nome.trim()) {
+                console.error('Nome inválido. Por favor, tente novamente.');
+                i--;
+                continue;
+            }
+
+            const query = 'INSERT INTO alunos (nome) VALUES ($1)';
+            try {
+                await client.query(query, [nome]);
+                console.log(`Aluno ${nome} foi adicionado com sucesso!`);
+            } catch (err) {
+                console.error(`Erro ao adicionar o aluno ${nome}:`, err);
+            }
+        }
+    } catch (err) {
+        console.error('Erro ao salvar no banco de dados:', err);
+    } finally {
+        await client.end();
+    }
+}
+
+adicionarAlunos();
+
 });
